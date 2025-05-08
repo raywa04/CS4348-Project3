@@ -76,3 +76,31 @@ Set up the project environment and fully implement the `create` command, which g
 
 ---
 
+# Devlog Entry - [05-09-2025, 1:45AM] (Session Ends)
+### **Accomplishments:**  
+- Repository initialized and `devlog.md` created and committed.
+- Implemented and tested `create` command:
+  - Validates existence of the file
+  - Creates a 512-byte header block with:
+    - Magic bytes: `4348PRJ3`
+    - Root block ID: `0`
+    - Next block ID: `1`
+  - Everything written in 8-byte big-endian format.
+- Verified the output file using a hex editor to confirm proper byte alignment and structure.
+- Wrote reusable `write_header()` helper function.
+
+### **Problems Encountered:**  
+- Minor confusion initially about how to align offsets for header fields, but resolved by defining named constants and slicing into the bytearray precisely.
+
+### **Additional Accomplishments:**  
+- Set up command parsing for future commands in `main()`
+- Validated structure with custom debug utility that prints raw byte output
+- Added in-line comments for clarity
+
+### **Goals for next session:**  
+- Begin implementing the `insert` command:
+  - Define in-memory representation of a node block
+  - Add serialization/deserialization logic for a single node
+  - Insert key-value pair into a new root node (no splits yet)
+  - Update header’s root ID and next block ID after insertion
+
