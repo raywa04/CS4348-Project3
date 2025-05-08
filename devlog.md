@@ -132,3 +132,28 @@ Implement a basic version of the `insert` command that:
 
 ---
 
+# Devlog Entry - [05-08-2025, 2:20AM] (Session Ends)
+### **Accomplishments:**  
+- Implemented a `BTreeNode` class that supports:
+  - Node initialization with default arrays
+  - Insertion of a single key/value
+  - Serialization to 512-byte block using big-endian format
+- Wrote the first stage of the `insert` command:
+  - Detects if the tree is empty
+  - Creates and writes a root node with the given key/value
+  - Updates the header with root block ID and next available block
+- Successfully tested multiple inserts into empty files
+- Confirmed block structure with a hex viewer
+
+### **Problems Encountered:**  
+- Made an off-by-8-byte error when laying out the fields — fixed after defining offsets more precisely
+- Had to debug why inserted integers were not appearing correctly — issue was forgetting to use `.to_bytes(8, 'big')` in a couple of places
+
+### **Additional Accomplishments:**
+- Refactored read/write header functions to support reusability across commands
+- Validated that file offsets are properly aligned to block boundaries
+
+### **Goals for next session:**  
+- Implement reading and deserializing a BTreeNode from disk
+- Begin handling insertions into an existing root node (no splits yet)
+- Add search logic for finding correct insert position in a non-empty root
