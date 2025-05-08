@@ -1,19 +1,36 @@
 import sys
 import os
+from btree_node import BTreeNode
 
 BLOCK_SIZE = 512
 MAGIC = b"4348PRJ3"
-HEADER_SIZE = BLOCK_SIZE
 ROOT_ID_OFFSET = 8
 NEXT_BLOCK_ID_OFFSET = 16
 
 def write_header(file_path):
     with open(file_path, "wb") as f:
-        # Block 0: Header
         block = bytearray(BLOCK_SIZE)
         block[0:8] = MAGIC
-        block[ROOT_ID_OFFSET:ROOT_ID_OFFSET+8] = (0).to_bytes(8, 'big')  # Root ID
-        block[NEXT_BLOCK_ID_OFFSET:NEXT_BLOCK_ID_OFFSET+8] = (1).to_bytes(8, 'big')  # Next block ID
+        block[ROOT_ID_OFFSET:ROOT_ID_OFFSET+8] = (0).to_bytes(8, 'big')
+        block[NEXT_BLOCK_ID_OFFSET:NEXT_BLOCK_ID_OFFSET+8] = (1).to_bytes(8, 'big')
+        f.write(block)
+
+def read_header(file_path):
+    with open(file_path, "rb") as f:
+        block = f.read(BLOCK_SIZE)
+        if block[0:8] != MAGIC:
+            raise Exception("Invalid file format.")
+        root_id = int.from_bytes(block[ROOT_ID_OFFSET:ROOT_ID_OFFSET+8], 'big')
+        next_id = int.from_bytes(block[NEXT_BLOCK_ID_OFFSET:NEXT_BLOCK_ID_OFFSET+8], 'big')
+        return root_id, next_id
+
+def write_header_update(file_path, root_id, next_id):
+    with open(file_path, "r+b") as f:
+        block = bytearray(BLOCK_SIZE)
+        block[0:8] = MAGIC
+        block[ROOT_ID_OFFSET:ROOT_ID_OFFSET+8] = root_id.to_bytes(8, 'big')
+        block[NEXT_BLOCK_ID_OFFSET:NEXT_BLOCK_ID_OFFSET+8] = next_id.to_bytes(8, 'big')
+        f.seek(0)
         f.write(block)
 
 def create_index(file_path):
@@ -22,6 +39,21 @@ def create_index(file_path):
         sys.exit(1)
     write_header(file_path)
     print(f"Index file '{file_path}' created.")
+
+def insert(file_path, key, value):
+    key, value = int(key), int(value)
+    root_id, next_id = read_header(file_path)
+
+    if root_id == 0:
+        node = BTreeNode(block_id=next_id)
+        node.insert_kv(key, value)
+        with open(file_path, "r+b") as f:
+            f.seek(next_id * BLOCK_SIZE)
+            f.write(node.to_bytes())
+        write_header_update(file_path, root_id=next_id, next_id=next_id + 1)
+        print(f"Inserted {key}:{value} into new root at block {next_id}")
+    else:
+        print("Insert into existing tree not yet implemented.")
 
 def main():
     if len(sys.argv) < 3:
@@ -33,6 +65,11 @@ def main():
 
     if command == "create":
         create_index(file_path)
+    elif command == "insert":
+        if len(sys.argv) < 5:
+            print("Usage: project3 insert <file> <key> <value>")
+            return
+        insert(file_path, sys.argv[3], sys.argv[4])
     else:
         print(f"Unknown command: {command}")
 
