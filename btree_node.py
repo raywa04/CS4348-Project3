@@ -65,3 +65,11 @@ class BTreeNode:
             node.children[i] = int.from_bytes(block_bytes[offset:offset+8], 'big')
             offset += 8
         return node
+
+    def clone_slice(self, new_block_id, start, end):
+        new_node = BTreeNode(block_id=new_block_id, parent_id=0)
+        new_node.num_keys = end - start
+        for i in range(start, end):
+            new_node.keys[i - start] = self.keys[i]
+            new_node.values[i - start] = self.values[i]
+        return new_node
