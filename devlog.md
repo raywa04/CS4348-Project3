@@ -157,3 +157,31 @@ Implement a basic version of the `insert` command that:
 - Implement reading and deserializing a BTreeNode from disk
 - Begin handling insertions into an existing root node (no splits yet)
 - Add search logic for finding correct insert position in a non-empty root
+
+---
+
+# Devlog Entry - [05-08-2025, 2:25AM] (Session Begins)
+### **Thoughts So Far:**  
+Now that insertion into an empty tree works, the next step is handling insertions into an **existing root node**, as long as it has space. This is still a simplified scenario — we will not handle node splits or traversing deeper levels of the tree yet.
+
+The idea is:
+- Load the root node from the file
+- Insert the new key/value if the node is not full
+- Sort the key/value pairs for in-node ordering
+- Rewrite the root node to disk  
+This will help validate the B-Tree format and prepare us for handling deeper insertions and splits later.
+
+---
+
+## **Plan for This Session:**
+
+### **Goal:**  
+Enable the `insert` command to work on an existing root node that is not full.
+
+### **Steps:**
+- Add method to `BTreeNode` to read from bytes (`from_bytes`)
+- Modify `insert` logic to load root node and insert if there’s room
+- Sort key/value pairs inside the node to maintain order
+- Rewrite updated node back to disk
+
+---
