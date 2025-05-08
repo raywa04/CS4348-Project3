@@ -207,3 +207,45 @@ Enable the `insert` command to work on an existing root node that is not full.
 - Create two children and promote the median key
 - Begin enforcing the “3 nodes in memory” rule during splits
 
+---
+
+# Devlog Entry - [05-08-2025, 3:00AM] (Session Begins)
+
+### **Thoughts So Far:**  
+So far, I’ve implemented inserting into an empty tree and inserting into a non-full root node. Now I’m tackling the case where the root node is full — which requires **splitting the root**.
+
+In a B-Tree, when the root node is full and a new key is inserted:
+- The root node must be split into two children.
+- The median key is promoted to a new root node.
+- The existing root becomes the left child, and a new right child is created for the upper half of keys.
+
+This step involves writing 3 nodes to disk:
+1. Left child (existing root node, sliced to lower half)
+2. Right child (newly created with upper half)
+3. New root node (containing the promoted key and two child pointers)
+
+This will also test how well I manage memory (stay under 3 nodes in memory).
+
+---
+
+## **Plan for This Session:**
+
+### **Goal:**  
+Implement root node splitting logic. If the root is full:
+- Split into two nodes
+- Promote the median key into a new root
+- Update the header to point to the new root block
+
+### **Steps:**
+- Write a `split_root()` helper that:
+  - Reads the full root node
+  - Partitions keys/values into left and right
+  - Creates a new root with promoted median
+  - Updates header block with new root ID and increments next block ID
+- Ensure only 3 nodes in memory are used:
+  - Original root → becomes left child
+  - New right child
+  - New root
+
+
+
