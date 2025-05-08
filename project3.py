@@ -44,16 +44,25 @@ def insert(file_path, key, value):
     key, value = int(key), int(value)
     root_id, next_id = read_header(file_path)
 
-    if root_id == 0:
-        node = BTreeNode(block_id=next_id)
-        node.insert_kv(key, value)
-        with open(file_path, "r+b") as f:
+    with open(file_path, "r+b") as f:
+        if root_id == 0:
+            node = BTreeNode(block_id=next_id)
+            node.insert_kv(key, value)
             f.seek(next_id * BLOCK_SIZE)
             f.write(node.to_bytes())
-        write_header_update(file_path, root_id=next_id, next_id=next_id + 1)
-        print(f"Inserted {key}:{value} into new root at block {next_id}")
-    else:
-        print("Insert into existing tree not yet implemented.")
+            write_header_update(file_path, root_id=next_id, next_id=next_id + 1)
+            print(f"Inserted {key}:{value} into new root at block {next_id}")
+        else:
+            f.seek(root_id * BLOCK_SIZE)
+            block_bytes = f.read(BLOCK_SIZE)
+            node = BTreeNode.from_bytes(block_bytes)
+            if node.num_keys >= 19:
+                print("Root node full. Splitting not implemented.")
+                return
+            node.insert_and_sort(key, value)
+            f.seek(root_id * BLOCK_SIZE)
+            f.write(node.to_bytes())
+            print(f"Inserted {key}:{value} into existing root at block {root_id}")
 
 def main():
     if len(sys.argv) < 3:
