@@ -247,5 +247,34 @@ Implement root node splitting logic. If the root is full:
   - New right child
   - New root
 
+---
+
+# Devlog Entry - [05-08-2025, 3:30AM] (Session Ends)
+
+### **Accomplishments:**  
+- Implemented root node splitting:
+  - Sorted full root node with new key/value
+  - Promoted median key into a new root node
+  - Created left and right child nodes and wrote them to disk
+  - Updated the header block to point to the new root
+- Confirmed all three nodes (left, right, and new root) are written correctly with proper structure
+- Verified behavior by inserting 20+ values and confirming proper root split occurs at capacity
+
+### **Problems Encountered:**  
+- Initially used incorrect slice range for right node during split (`mid:` instead of `mid+1:`), which duplicated the median key — fixed after debugging with printed offsets
+- Had to reset block IDs carefully to avoid misaligned file seeks
+
+### **Additional Accomplishments:**  
+- Added a `clone_slice()` helper to BTreeNode for clean splitting logic
+- Carefully managed memory usage: only 3 nodes are in memory during the split
+
+### **Goals for next session:**  
+- Begin recursive insert support:
+  - Read child nodes based on key position
+  - Traverse to correct child for insertion
+  - Handle splits at child levels and propagate promotions
+- Enforce 3-node memory usage in deeper insert paths
+
+
 
 
