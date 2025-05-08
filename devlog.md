@@ -104,3 +104,31 @@ Set up the project environment and fully implement the `create` command, which g
   - Insert key-value pair into a new root node (no splits yet)
   - Update header’s root ID and next block ID after insertion
 
+# Devlog Entry - [05-08-2025, 1:50AM] (Session Begins)
+### **Thoughts So Far:**  
+Now that the `create` command is complete and working, it’s time to start building the `insert` command. The goal is to insert a key/value pair into the B-Tree. Since this is the first insert, it will also involve creating the root node (if it doesn’t exist). We'll keep it simple for now — no splits, just a flat insert into the root node if it's empty.
+
+A key challenge is serializing and deserializing node structures using big-endian 8-byte values and ensuring the offsets match the node layout precisely. The node will be written to the block specified by `next_block_id`, and the header must then be updated to reflect the root node’s block ID and increment the next block ID.
+
+---
+
+## **Plan for This Session:**
+
+### **Goal:**  
+Implement a basic version of the `insert` command that:
+- Loads the header block
+- Creates a root node if none exists
+- Adds a single key/value pair to the root node
+- Writes the root node and updates the header accordingly
+
+### **Steps:**
+- Define BTreeNode class for node serialization and deserialization
+- Implement insert logic:
+  - Load header
+  - Check if root node exists
+  - If not, create a root node block, insert key/value, and update header
+- Use only 1 node in memory for this step (root)
+- Write helper functions for reading/writing blocks and big-endian conversions
+
+---
+
