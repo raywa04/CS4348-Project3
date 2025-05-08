@@ -185,3 +185,25 @@ Enable the `insert` command to work on an existing root node that is not full.
 - Rewrite updated node back to disk
 
 ---
+
+# Devlog Entry - [05-08-2025, 2:50AM] (Session Ends)
+### **Accomplishments:**  
+- Implemented `from_bytes()` method to deserialize a node from disk
+- Built `insert_and_sort()` to keep key/value pairs sorted after insertion
+- Updated `insert()` to work on an existing root (if not full)
+- Verified the insertions remain sorted and persisted across multiple runs
+- Inserted up to 19 keys in a single-node tree, ensuring in-memory and on-disk state matched
+
+### **Problems Encountered:**  
+- Needed to carefully manage slice offsets when deserializing from bytes
+- Initially forgot to update the node’s `num_keys` after sort — fixed
+
+### **Additional Accomplishments:**  
+- Confirmed the full cycle of loading → mutating → saving a node works correctly
+- Cleaned up debug prints and added validation for key/value conversion
+
+### **Goals for next session:**  
+- Implement node splitting when inserting into a full root
+- Create two children and promote the median key
+- Begin enforcing the “3 nodes in memory” rule during splits
+
