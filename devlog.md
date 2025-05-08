@@ -275,6 +275,39 @@ Implement root node splitting logic. If the root is full:
   - Handle splits at child levels and propagate promotions
 - Enforce 3-node memory usage in deeper insert paths
 
+---
 
+# Devlog Entry - [05-08-2025, 1:50PM] (Session Begins)
+
+### **Thoughts So Far:**  
+Now that the root node can be split, the next major goal is enabling **recursive insertions**. Currently, all keys go directly into the root. But after a split, the root has two children — and we need to follow the B-Tree logic to:
+- Traverse to the correct child node
+- Insert recursively
+- Handle splits along the way and promote median keys up
+
+This step involves:
+- Deserializing child nodes based on key comparisons
+- Recursively calling insert logic down the tree
+- Bubbling up split results (median key + new block ID) to the parent
+
+I also need to be careful to enforce the **3 nodes in memory** rule, which is now more important as the tree grows.
+
+---
+
+## **Plan for This Session:**
+
+### **Goal:**  
+Implement recursive insertions into non-root nodes. When a child is full:
+- Split it
+- Promote median key and insert into the current node
+- Recursively support bubbling up splits
+
+### **Steps:**
+- Modify `insert()` to dispatch recursive logic when the root is not a leaf
+- Write a `recursive_insert()` function that:
+  - Loads child nodes by comparing the current key
+  - Handles insert or recursive calls
+  - Splits full children and returns promotion results
+- Limit active in-memory nodes to 3
 
 
