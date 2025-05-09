@@ -73,3 +73,12 @@ class BTreeNode:
             new_node.keys[i - start] = self.keys[i]
             new_node.values[i - start] = self.values[i]
         return new_node
+
+    def find_child_index(self, key):
+        for i in range(self.num_keys):
+            if key < self.keys[i]:
+                return i
+        return self.num_keys
+
+    def is_leaf(self):
+        return all(ptr == 0 for ptr in self.children[:self.num_keys + 1])

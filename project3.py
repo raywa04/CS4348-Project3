@@ -33,39 +33,65 @@ def write_header_update(file_path, root_id, next_id):
         f.seek(0)
         f.write(block)
 
+def split_and_promote(file, node, key, value, next_id):
+    node.insert_and_sort(key, value)
+    mid = node.num_keys // 2
+    promoted_key = node.keys[mid]
+    promoted_value = node.values[mid]
+
+    left_node = node.clone_slice(new_block_id=node.block_id, start=0, end=mid)
+    right_node = node.clone_slice(new_block_id=next_id, start=mid+1, end=node.num_keys)
+
+    if not node.is_leaf():
+        for i in range(mid + 1):
+            left_node.children[i] = node.children[i]
+        for i in range(mid + 1, node.num_keys + 1):
+            right_node.children[i - (mid + 1)] = node.children[i]
+
+    file.seek(left_node.block_id * BLOCK_SIZE)
+    file.write(left_node.to_bytes())
+    file.seek(right_node.block_id * BLOCK_SIZE)
+    file.write(right_node.to_bytes())
+
+    return (promoted_key, promoted_value, right_node.block_id)
+
+def recursive_insert(file, node, key, value, next_id):
+    if node.is_leaf():
+        if node.num_keys >= 19:
+            return split_and_promote(file, node, key, value, next_id)
+        node.insert_and_sort(key, value)
+        file.seek(node.block_id * BLOCK_SIZE)
+        file.write(node.to_bytes())
+        return None
+    else:
+        idx = node.find_child_index(key)
+        child_block_id = node.children[idx]
+        file.seek(child_block_id * BLOCK_SIZE)
+        child_bytes = file.read(BLOCK_SIZE)
+        child_node = BTreeNode.from_bytes(child_bytes)
+
+        if child_node.num_keys >= 19:
+            result = split_and_promote(file, child_node, key, value, next_id)
+            if result:
+                promoted_key, promoted_value, new_right_id = result
+                node.insert_and_sort(promoted_key, promoted_value)
+                insert_pos = node.find_child_index(promoted_key)
+                for j in range(node.num_keys, insert_pos, -1):
+                    node.children[j+1] = node.children[j]
+                node.children[insert_pos + 1] = new_right_id
+                file.seek(node.block_id * BLOCK_SIZE)
+                file.write(node.to_bytes())
+                return None
+        else:
+            recursive_insert(file, child_node, key, value, next_id)
+            return None
+
 def create_index(file_path):
     if os.path.exists(file_path):
         print("Error: File already exists.")
         sys.exit(1)
     write_header(file_path)
     print(f"Index file '{file_path}' created.")
-
-def split_root(file_path, root_node, key, value, root_id, next_id):
-    root_node.insert_and_sort(key, value)
-    mid = root_node.num_keys // 2
-    promoted_key = root_node.keys[mid]
-    promoted_value = root_node.values[mid]
-
-    left_node = root_node.clone_slice(new_block_id=root_id, start=0, end=mid)
-    right_node = root_node.clone_slice(new_block_id=next_id, start=mid + 1, end=root_node.num_keys)
-
-    new_root = BTreeNode(block_id=next_id + 1)
-    new_root.keys[0] = promoted_key
-    new_root.values[0] = promoted_value
-    new_root.children[0] = root_id
-    new_root.children[1] = next_id
-    new_root.num_keys = 1
-
-    with open(file_path, "r+b") as f:
-        f.seek(root_id * BLOCK_SIZE)
-        f.write(left_node.to_bytes())
-        f.seek(next_id * BLOCK_SIZE)
-        f.write(right_node.to_bytes())
-        f.seek((next_id + 1) * BLOCK_SIZE)
-        f.write(new_root.to_bytes())
-
-    write_header_update(file_path, root_id=next_id + 1, next_id=next_id + 2)
-    print(f"Root split. New root at block {next_id + 1}")
 
 def insert(file_path, key, value):
     key, value = int(key), int(value)
@@ -81,15 +107,28 @@ def insert(file_path, key, value):
             print(f"Inserted {key}:{value} into new root at block {next_id}")
         else:
             f.seek(root_id * BLOCK_SIZE)
-            block_bytes = f.read(BLOCK_SIZE)
-            node = BTreeNode.from_bytes(block_bytes)
-            if node.num_keys >= 19:
-                split_root(file_path, node, key, value, root_id, next_id)
+            root_bytes = f.read(BLOCK_SIZE)
+            root_node = BTreeNode.from_bytes(root_bytes)
+
+            if root_node.num_keys >= 19:
+                result = split_and_promote(f, root_node, key, value, next_id)
+                if result:
+                    promoted_key, promoted_value, new_right_id = result
+                    left_id = root_node.block_id
+                    right_id = new_right_id
+                    new_root = BTreeNode(block_id=next_id + 1)
+                    new_root.keys[0] = promoted_key
+                    new_root.values[0] = promoted_value
+                    new_root.children[0] = left_id
+                    new_root.children[1] = right_id
+                    new_root.num_keys = 1
+
+                    f.seek(new_root.block_id * BLOCK_SIZE)
+                    f.write(new_root.to_bytes())
+                    write_header_update(file_path, root_id=new_root.block_id, next_id=next_id + 2)
+                    print(f"Split full root. Promoted key {promoted_key} to new root.")
             else:
-                node.insert_and_sort(key, value)
-                f.seek(root_id * BLOCK_SIZE)
-                f.write(node.to_bytes())
-                print(f"Inserted {key}:{value} into existing root at block {root_id}")
+                recursive_insert(f, root_node, key, value, next_id)
 
 def main():
     if len(sys.argv) < 3:
