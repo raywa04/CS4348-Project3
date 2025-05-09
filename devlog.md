@@ -310,4 +310,34 @@ Implement recursive insertions into non-root nodes. When a child is full:
   - Splits full children and returns promotion results
 - Limit active in-memory nodes to 3
 
+---
+
+# Devlog Entry - [05-08-2025, 7:30PM] (Session Ends)
+
+### **Accomplishments:**  
+- Implemented recursive insertion logic across multiple B-Tree levels
+- Added helper methods `recursive_insert()` and `split_and_promote()` to handle:
+  - Traversal to the correct child
+  - Splitting full child nodes
+  - Promoting median key-value pairs up to the parent
+- Confirmed insertion works correctly for trees with depth > 1
+- Ensured only 3 nodes are held in memory during recursive insertion
+- Extended `btree_node.py` with:
+  - `find_child_index()` for binary-like navigation
+  - `is_leaf()` to determine whether a node is a leaf
+
+### **Problems Encountered:**  
+- Needed to correctly realign child pointers after inserting promoted keys into parent nodes
+- Discovered an off-by-one bug in shifting child pointers during promotion — resolved by testing with 20+ keys
+
+### **Additional Accomplishments:**  
+- Successfully inserted over 60 keys across multiple levels
+- Validated all node blocks are consistent using hex viewer and byte layout checks
+
+### **Goals for next session:**  
+- Implement `search` command to locate values by key
+- Add `print` for in-order traversal of all key-value pairs
+- Add `extract` to output results to a CSV file
+
+
 
