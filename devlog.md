@@ -340,4 +340,35 @@ Implement recursive insertions into non-root nodes. When a child is full:
 - Add `extract` to output results to a CSV file
 
 
+# Devlog Entry - [05-08-2025, 7:30PM] (Session Begins)
+
+### **Thoughts So Far:**  
+Now that recursive insertion works and the B-Tree structure is solid, it’s time to implement three core read-based commands:
+
+- **`search`**: Given a key, find its value (or indicate not found).
+- **`print`**: Traverse the entire B-Tree in-order and display key-value pairs.
+- **`extract`**: Output all key-value pairs in sorted order to a `.csv` file.
+
+These commands involve read-only traversal and should not violate the 3-node memory limit, but they **do** require:
+- Recursively reading nodes from disk
+- Correctly handling left-to-right traversal
+- Depth-first traversal for `print` and `extract`
+
+---
+
+## **Plan for This Session:**
+
+### **Goal:**  
+Implement and test:
+- `search <file> <key>`: return value or "NOT FOUND"
+- `print <file>`: display all (key, value) pairs in order
+- `extract <file> <outfile.csv>`: save all pairs to CSV in order
+
+### **Steps:**
+- Add `search_btree()` that recursively finds a key
+- Add `inorder_traversal()` for print/extract
+- Add logic to write to console or file as needed
+- Ensure all traversals are recursive and disk-based
+
+
 
