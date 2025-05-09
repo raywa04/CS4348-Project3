@@ -397,6 +397,7 @@ Implement and test:
 - Implement `delete` command to remove key-value pairs from the tree
 - Handle rebalancing after delete (borrow, merge, or collapse)
 - Ensure deletions propagate correctly in internal nodes as well as leaves
+- IF I HAVE TIME TO, ELSE IM DONE
 
 
 
