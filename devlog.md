@@ -370,5 +370,65 @@ Implement and test:
 - Add logic to write to console or file as needed
 - Ensure all traversals are recursive and disk-based
 
+---
+
+# Devlog Entry - [05-08-2025, 8:00PM] (Session Ends)
+
+### **Accomplishments:**  
+- Implemented the `search` command:
+  - Recursively traverses the B-Tree to find a key
+  - Prints the associated value or "NOT FOUND"
+- Added the `print` command:
+  - Performs in-order traversal and prints all key-value pairs in sorted order
+- Added the `extract` command:
+  - Writes all key-value pairs to a CSV file using in-order traversal
+- Verified all three commands work with multi-level trees and large datasets
+- Ensured traversal respects the 3-node memory rule by reading nodes from disk only when needed
+
+### **Problems Encountered:**  
+- Initially forgot to check `children[num_keys]` for the final rightmost subtree during traversal — fixed after noticing missing keys in print/extract
+- Had to update newline formatting for CSV output to be compatible with different editors
+
+### **Additional Accomplishments:**  
+- Unified traversal logic for print and extract using `inorder_traversal()`
+- Reused the same recursive logic across commands, reducing redundancy
+
+### **Goals for next session:**  
+- Implement `delete` command to remove key-value pairs from the tree
+- Handle rebalancing after delete (borrow, merge, or collapse)
+- Ensure deletions propagate correctly in internal nodes as well as leaves
+- IF I HAVE TIME TO, ELSE IM DONE
+
+
+# Devlog Entry - [05-08-2025, 8:10PM] (Final Session Wrap-Up)
+
+### **Overall Accomplishments:**
+- Completed all core functionality for a disk-based B-Tree index manager
+- Enforced strict memory constraint of **≤ 3 in-memory nodes at any time**
+- Implemented the following features:
+  - `create`: Initializes the index file with a header block
+  - `insert`: Handles single key/value inserts, root and recursive child splits
+  - `search`: Recursively locates a key, returns value or "NOT FOUND"
+  - `print`: In-order traversal of the B-Tree to stdout
+  - `extract`: Outputs sorted key-value pairs to a `.csv` file
+
+### **Code Quality & Design Highlights:**
+- Designed clean and reusable traversal logic shared across `print`, `search`, and `extract`
+- Used byte-level serialization for nodes with fixed 512-byte blocks
+- Maintained clear separation of logic between node structure (`btree_node.py`) and commands (`project3.py`)
+
+### **Test Coverage:**
+- Inserted up to 100+ keys and validated tree structure
+- Manually verified .csv output, console prints, and search accuracy
+- Used hex viewers and controlled tests to confirm byte layout and disk writes
+
+### **Final Thoughts:**
+- The project reinforced deep understanding of B-Trees, disk I/O, and serialization
+- Recursive insert and split logic were the most challenging but also the most rewarding
+- Proud of having built a full-featured B-Tree manager with minimal memory use and solid correctness
+
+### **Final Status:** **Complete and fully functional**
+
+
 
 
