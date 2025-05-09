@@ -11,124 +11,80 @@ def write_header(file_path):
     with open(file_path, "wb") as f:
         block = bytearray(BLOCK_SIZE)
         block[0:8] = MAGIC
-        block[ROOT_ID_OFFSET:ROOT_ID_OFFSET+8] = (0).to_bytes(8, 'big')
-        block[NEXT_BLOCK_ID_OFFSET:NEXT_BLOCK_ID_OFFSET+8] = (1).to_bytes(8, 'big')
+        block[8:16] = (0).to_bytes(8, 'big')
+        block[16:24] = (1).to_bytes(8, 'big')
         f.write(block)
 
 def read_header(file_path):
     with open(file_path, "rb") as f:
         block = f.read(BLOCK_SIZE)
-        if block[0:8] != MAGIC:
-            raise Exception("Invalid file format.")
-        root_id = int.from_bytes(block[ROOT_ID_OFFSET:ROOT_ID_OFFSET+8], 'big')
-        next_id = int.from_bytes(block[NEXT_BLOCK_ID_OFFSET:NEXT_BLOCK_ID_OFFSET+8], 'big')
+        root_id = int.from_bytes(block[8:16], 'big')
+        next_id = int.from_bytes(block[16:24], 'big')
         return root_id, next_id
 
 def write_header_update(file_path, root_id, next_id):
     with open(file_path, "r+b") as f:
         block = bytearray(BLOCK_SIZE)
         block[0:8] = MAGIC
-        block[ROOT_ID_OFFSET:ROOT_ID_OFFSET+8] = root_id.to_bytes(8, 'big')
-        block[NEXT_BLOCK_ID_OFFSET:NEXT_BLOCK_ID_OFFSET+8] = next_id.to_bytes(8, 'big')
+        block[8:16] = root_id.to_bytes(8, 'big')
+        block[16:24] = next_id.to_bytes(8, 'big')
         f.seek(0)
         f.write(block)
 
-def split_and_promote(file, node, key, value, next_id):
-    node.insert_and_sort(key, value)
-    mid = node.num_keys // 2
-    promoted_key = node.keys[mid]
-    promoted_value = node.values[mid]
+def search_btree(file, block_id, key):
+    file.seek(block_id * BLOCK_SIZE)
+    block_bytes = file.read(BLOCK_SIZE)
+    node = BTreeNode.from_bytes(block_bytes)
 
-    left_node = node.clone_slice(new_block_id=node.block_id, start=0, end=mid)
-    right_node = node.clone_slice(new_block_id=next_id, start=mid+1, end=node.num_keys)
-
-    if not node.is_leaf():
-        for i in range(mid + 1):
-            left_node.children[i] = node.children[i]
-        for i in range(mid + 1, node.num_keys + 1):
-            right_node.children[i - (mid + 1)] = node.children[i]
-
-    file.seek(left_node.block_id * BLOCK_SIZE)
-    file.write(left_node.to_bytes())
-    file.seek(right_node.block_id * BLOCK_SIZE)
-    file.write(right_node.to_bytes())
-
-    return (promoted_key, promoted_value, right_node.block_id)
-
-def recursive_insert(file, node, key, value, next_id):
-    if node.is_leaf():
-        if node.num_keys >= 19:
-            return split_and_promote(file, node, key, value, next_id)
-        node.insert_and_sort(key, value)
-        file.seek(node.block_id * BLOCK_SIZE)
-        file.write(node.to_bytes())
-        return None
-    else:
-        idx = node.find_child_index(key)
-        child_block_id = node.children[idx]
-        file.seek(child_block_id * BLOCK_SIZE)
-        child_bytes = file.read(BLOCK_SIZE)
-        child_node = BTreeNode.from_bytes(child_bytes)
-
-        if child_node.num_keys >= 19:
-            result = split_and_promote(file, child_node, key, value, next_id)
-            if result:
-                promoted_key, promoted_value, new_right_id = result
-                node.insert_and_sort(promoted_key, promoted_value)
-                insert_pos = node.find_child_index(promoted_key)
-                for j in range(node.num_keys, insert_pos, -1):
-                    node.children[j+1] = node.children[j]
-                node.children[insert_pos + 1] = new_right_id
-                file.seek(node.block_id * BLOCK_SIZE)
-                file.write(node.to_bytes())
+    for i in range(node.num_keys):
+        if key == node.keys[i]:
+            return node.values[i]
+        elif key < node.keys[i]:
+            if node.children[i] == 0:
                 return None
+            return search_btree(file, node.children[i], key)
+    if node.children[node.num_keys] != 0:
+        return search_btree(file, node.children[node.num_keys], key)
+    return None
+
+def inorder_traversal(file, block_id, results):
+    file.seek(block_id * BLOCK_SIZE)
+    block_bytes = file.read(BLOCK_SIZE)
+    node = BTreeNode.from_bytes(block_bytes)
+
+    for i in range(node.num_keys):
+        if node.children[i] != 0:
+            inorder_traversal(file, node.children[i], results)
+        results.append((node.keys[i], node.values[i]))
+    if node.children[node.num_keys] != 0:
+        inorder_traversal(file, node.children[node.num_keys], results)
+
+def handle_search(file_path, key):
+    root_id, _ = read_header(file_path)
+    with open(file_path, "rb") as f:
+        result = search_btree(f, root_id, int(key))
+        if result is None:
+            print("NOT FOUND")
         else:
-            recursive_insert(file, child_node, key, value, next_id)
-            return None
+            print(result)
 
-def create_index(file_path):
-    if os.path.exists(file_path):
-        print("Error: File already exists.")
-        sys.exit(1)
-    write_header(file_path)
-    print(f"Index file '{file_path}' created.")
+def handle_print(file_path):
+    root_id, _ = read_header(file_path)
+    results = []
+    with open(file_path, "rb") as f:
+        inorder_traversal(f, root_id, results)
+    for k, v in results:
+        print(f"{k},{v}")
 
-def insert(file_path, key, value):
-    key, value = int(key), int(value)
-    root_id, next_id = read_header(file_path)
-
-    with open(file_path, "r+b") as f:
-        if root_id == 0:
-            node = BTreeNode(block_id=next_id)
-            node.insert_kv(key, value)
-            f.seek(next_id * BLOCK_SIZE)
-            f.write(node.to_bytes())
-            write_header_update(file_path, root_id=next_id, next_id=next_id + 1)
-            print(f"Inserted {key}:{value} into new root at block {next_id}")
-        else:
-            f.seek(root_id * BLOCK_SIZE)
-            root_bytes = f.read(BLOCK_SIZE)
-            root_node = BTreeNode.from_bytes(root_bytes)
-
-            if root_node.num_keys >= 19:
-                result = split_and_promote(f, root_node, key, value, next_id)
-                if result:
-                    promoted_key, promoted_value, new_right_id = result
-                    left_id = root_node.block_id
-                    right_id = new_right_id
-                    new_root = BTreeNode(block_id=next_id + 1)
-                    new_root.keys[0] = promoted_key
-                    new_root.values[0] = promoted_value
-                    new_root.children[0] = left_id
-                    new_root.children[1] = right_id
-                    new_root.num_keys = 1
-
-                    f.seek(new_root.block_id * BLOCK_SIZE)
-                    f.write(new_root.to_bytes())
-                    write_header_update(file_path, root_id=new_root.block_id, next_id=next_id + 2)
-                    print(f"Split full root. Promoted key {promoted_key} to new root.")
-            else:
-                recursive_insert(f, root_node, key, value, next_id)
+def handle_extract(file_path, out_path):
+    root_id, _ = read_header(file_path)
+    results = []
+    with open(file_path, "rb") as f:
+        inorder_traversal(f, root_id, results)
+    with open(out_path, "w") as out:
+        for k, v in results:
+            out.write(f"{k},{v}\n")
+    print(f"Extracted to {out_path}")
 
 def main():
     if len(sys.argv) < 3:
@@ -139,12 +95,20 @@ def main():
     file_path = sys.argv[2]
 
     if command == "create":
-        create_index(file_path)
-    elif command == "insert":
-        if len(sys.argv) < 5:
-            print("Usage: project3 insert <file> <key> <value>")
+        write_header(file_path)
+        print(f"Index file '{file_path}' created.")
+    elif command == "search":
+        if len(sys.argv) < 4:
+            print("Usage: project3 search <file> <key>")
             return
-        insert(file_path, sys.argv[3], sys.argv[4])
+        handle_search(file_path, sys.argv[3])
+    elif command == "print":
+        handle_print(file_path)
+    elif command == "extract":
+        if len(sys.argv) < 4:
+            print("Usage: project3 extract <file> <outfile>")
+            return
+        handle_extract(file_path, sys.argv[3])
     else:
         print(f"Unknown command: {command}")
 
