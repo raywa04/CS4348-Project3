@@ -370,5 +370,34 @@ Implement and test:
 - Add logic to write to console or file as needed
 - Ensure all traversals are recursive and disk-based
 
+---
+
+# Devlog Entry - [05-08-2025, 8:00PM] (Session Ends)
+
+### **Accomplishments:**  
+- Implemented the `search` command:
+  - Recursively traverses the B-Tree to find a key
+  - Prints the associated value or "NOT FOUND"
+- Added the `print` command:
+  - Performs in-order traversal and prints all key-value pairs in sorted order
+- Added the `extract` command:
+  - Writes all key-value pairs to a CSV file using in-order traversal
+- Verified all three commands work with multi-level trees and large datasets
+- Ensured traversal respects the 3-node memory rule by reading nodes from disk only when needed
+
+### **Problems Encountered:**  
+- Initially forgot to check `children[num_keys]` for the final rightmost subtree during traversal — fixed after noticing missing keys in print/extract
+- Had to update newline formatting for CSV output to be compatible with different editors
+
+### **Additional Accomplishments:**  
+- Unified traversal logic for print and extract using `inorder_traversal()`
+- Reused the same recursive logic across commands, reducing redundancy
+
+### **Goals for next session:**  
+- Implement `delete` command to remove key-value pairs from the tree
+- Handle rebalancing after delete (borrow, merge, or collapse)
+- Ensure deletions propagate correctly in internal nodes as well as leaves
+
+
 
 
