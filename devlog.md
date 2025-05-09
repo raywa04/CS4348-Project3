@@ -310,4 +310,65 @@ Implement recursive insertions into non-root nodes. When a child is full:
   - Splits full children and returns promotion results
 - Limit active in-memory nodes to 3
 
+---
+
+# Devlog Entry - [05-08-2025, 7:30PM] (Session Ends)
+
+### **Accomplishments:**  
+- Implemented recursive insertion logic across multiple B-Tree levels
+- Added helper methods `recursive_insert()` and `split_and_promote()` to handle:
+  - Traversal to the correct child
+  - Splitting full child nodes
+  - Promoting median key-value pairs up to the parent
+- Confirmed insertion works correctly for trees with depth > 1
+- Ensured only 3 nodes are held in memory during recursive insertion
+- Extended `btree_node.py` with:
+  - `find_child_index()` for binary-like navigation
+  - `is_leaf()` to determine whether a node is a leaf
+
+### **Problems Encountered:**  
+- Needed to correctly realign child pointers after inserting promoted keys into parent nodes
+- Discovered an off-by-one bug in shifting child pointers during promotion — resolved by testing with 20+ keys
+
+### **Additional Accomplishments:**  
+- Successfully inserted over 60 keys across multiple levels
+- Validated all node blocks are consistent using hex viewer and byte layout checks
+
+### **Goals for next session:**  
+- Implement `search` command to locate values by key
+- Add `print` for in-order traversal of all key-value pairs
+- Add `extract` to output results to a CSV file
+
+
+# Devlog Entry - [05-08-2025, 7:30PM] (Session Begins)
+
+### **Thoughts So Far:**  
+Now that recursive insertion works and the B-Tree structure is solid, it’s time to implement three core read-based commands:
+
+- **`search`**: Given a key, find its value (or indicate not found).
+- **`print`**: Traverse the entire B-Tree in-order and display key-value pairs.
+- **`extract`**: Output all key-value pairs in sorted order to a `.csv` file.
+
+These commands involve read-only traversal and should not violate the 3-node memory limit, but they **do** require:
+- Recursively reading nodes from disk
+- Correctly handling left-to-right traversal
+- Depth-first traversal for `print` and `extract`
+
+---
+
+## **Plan for This Session:**
+
+### **Goal:**  
+Implement and test:
+- `search <file> <key>`: return value or "NOT FOUND"
+- `print <file>`: display all (key, value) pairs in order
+- `extract <file> <outfile.csv>`: save all pairs to CSV in order
+
+### **Steps:**
+- Add `search_btree()` that recursively finds a key
+- Add `inorder_traversal()` for print/extract
+- Add logic to write to console or file as needed
+- Ensure all traversals are recursive and disk-based
+
+
 
