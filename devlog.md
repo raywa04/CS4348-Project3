@@ -427,8 +427,18 @@ Implement and test:
 - Recursive insert and split logic were the most challenging but also the most rewarding
 - Proud of having built a full-featured B-Tree manager with minimal memory use and solid correctness
 
-### **Final Status:** **Complete and fully functional**
+# Devlog Entry - [05-09-2025, 2:00AM] (Missed Logic + Final Patch)
 
+### **Reflections on Missed Logic:**
+While reviewing the project PDF and testing all required functionality, I realized I had initially overlooked the implementation of the `load` command. This command is essential for bulk-loading key-value pairs from a CSV file and was listed in the instructions alongside `search`, `print`, and `extract`.
 
+In addition, I had earlier disabled recursive insertion and root splitting temporarily for testing, and forgot to reintegrate it until the final stages.
 
+### **Corrections and Final Fixes:**
+- Implemented the `load` command to read a CSV file and call `insert()` on each line.
+- Updated the command handler in `main()` to support `load`.
+- Verified that the insertions from `load` behave identically to manual insertions.
+- Re-reviewed all command functionality and ensured `insert`, `search`, `print`, and `extract` are functioning correctly.
+
+### **Status:** ✅ Project now fully meets spec requirements.
 
